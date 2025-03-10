@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gRPC WebApp</title>
+</head>
+<body>
+    <h1>gRPC WebApp</h1>
+    <form id="queryForm">
+        <label for="query">Query:</label>
+        <input type="text" id="query" name="query" required>
+        <button type="submit">Send</button>
+    </form>
+    <div id="response"></div>
+    <div id="fields"></div>
+    <div id="root"></div> <!-- Este es el contenedor DOM -->
+    <h2>Agregar Datos a Firestore</h2>
+    <form id="addDataForm">
+        <label for="user_id">User ID:</label>
+        <input type="text" id="user_id" name="user_id" required><br>
+        <label for="user_name">User Name:</label>
+        <input type="text" id="user_name" name="user_name" required><br>
+        <label for="user_email">User Email:</label>
+        <input type="email" id="user_email" name="user_email" required><br>
+        <label for="task_id">Task ID:</label>
+        <input type="text" id="task_id" name="task_id" required><br>
+        <label for="task_title">Task Title:</label>
+        <input type="text" id="task_title" name="task_title" required><br>
+        <label for="task_status">Task Status:</label>
+        <input type="text" id="task_status" name="task_status" required><br>
+        <label for="task_due_date">Task Due Date:</label>
+        <input type="date" id="task_due_date" name="task_due_date" required><br>
+        <button type="submit">Add Data</button>
+    </form>
+    <div id="addDataResponse"></div>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = document.getElementById('query').value;
+            fetch('/getdata', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').innerText = 'Response: ' + data.data;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('addDataForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const user_id = document.getElementById('user_id').value;
+            const user_name = document.getElementById('user_name').value;
+            const user_email = document.getElementById('user_email').value;
+            const task_id = document.getElementById('task_id').value;
+            const task_title = document.getElementById('task_title').value;
+            const task_status = document.getElementById('task_status').value;
+            const task_due_date = document.getElementById('task_due_date').value;
+
+            fetch('/adddata', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: user_id,
+                    user_name: user_name,
+                    user_email: user_email,
+                    task_id: task_id,
+                    task_title: task_title,
+                    task_status: task_status,
+                    task_due_date: task_due_date
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('addDataResponse').innerText = data.message;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Cargar los campos y subcampos de la base de datos al cargar la página
+        window.onload = function() {
+            fetch('/getfields')
+            .then(response => response.json())
+            .then(data => {
+                const fieldsDiv = document.getElementById('fields');
+                fieldsDiv.innerHTML = '<h2>Campos de la base de datos:</h2>';
+                const ul = document.createElement('ul');
+                for (const field in data.fields) {
+                    const li = document.createElement('li');
+                    li.textContent = field;
+                    const subUl = document.createElement('ul');
+                    data.fields[field].forEach(subfield => {
+                        const subLi = document.createElement('li');
+                        subLi.textContent = subfield;
+                        subUl.appendChild(subLi);
+                    });
+                    li.appendChild(subUl);
+                    ul.appendChild(li);
+                }
+                fieldsDiv.appendChild(ul);
+            })
+            .catch(error => console.error('Error:', error));
+        };
+    </script>
+</body>
+</html>
+
+<script src="index.js" defer></script>
+
